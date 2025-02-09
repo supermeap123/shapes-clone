@@ -47,59 +47,6 @@ describe('Ping Command', () => {
 
   it('should handle errors gracefully', async () => {
     // Mock reply to throw an error
-    (mockInteraction.reply as jest.Mock).mockRejectedValue(new Error('Test error'));
-
-    // Execute the command
-    await pingCommand.execute(mockInteraction);
-
-    // Verify error was logged
-    expect(logger.error).toHaveBeenCalledWith(
-      'Error executing ping command:',
-      expect.any(Error)
-    );
-
-    // Verify error message was sent
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: 'There was an error while checking the ping!',
-      ephemeral: true
-    });
-  });
-
-  it('should have correct command structure', () => {
-    expect(pingCommand.data.name).toBe('ping');
-    expect(pingCommand.data.description).toBe('Check the bot\'s response time');
-    expect(pingCommand.cooldown).toBe(5);
-  });
-    await pingCommand.execute(mockInteraction as unknown as ChatInputCommandInteraction);
-
-    // Verify initial reply was sent
-    expect(mockInteraction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        content: 'Pinging...',
-        fetchReply: true
-      })
-    );
-
-    // Verify edit reply was called with embed
-    expect(mockInteraction.editReply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        content: '',
-        embeds: [expect.any(Object)]
-      })
-    );
-
-    // Verify logger was called
-    expect(logger.debug).toHaveBeenCalledWith(
-      'Ping command executed:',
-      expect.objectContaining({
-        wsLatency: 42,
-        roundtripLatency: expect.any(Number)
-      })
-    );
-  });
-
-  it('should handle errors gracefully', async () => {
-    // Mock reply to throw an error
     mockInteraction.reply = jest.fn().mockRejectedValue(new Error('Test error'));
 
     // Execute the command
