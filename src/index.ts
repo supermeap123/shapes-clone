@@ -1,55 +1,23 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
-import { env } from './config/env';
-import { setupBot } from './discord/setup';
-import { startWebServer } from './web/server';
-import { setupLogger } from './utils/logger';
+import { Client, GatewayIntentBits } from 'discord.js';
+import { registerCommands, handleInteraction } from './commands/index';
+import { memoryManager } from './memory';
+import { personalityManager } from './personality';
+import { openRouterClient } from './openrouter';
+import dotenv from 'dotenv';
 
-const logger = setupLogger();
+dotenv.config();
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.GuildModeration
-  ],
-  partials: [
-    Partials.Channel,
-    Partials.Message,
-    Partials.User,
-    Partials.GuildMember
-  ]
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.once('ready', async () => {
+  console.log(`Logged in as ${client.user?.tag}!`);
+  await registerCommands(process.env.CLIENT_ID!, process.env.DISCORD_BOT_TOKEN!);
 });
 
-async function main() {
-  try {
-    // Initialize Discord bot
-    await setupBot(client);
-    
-    // Start web server
-    await startWebServer();
-    
-    // Login to Discord
-    await client.login(env.DISCORD_TOKEN);
-    
-    logger.info('Shapes clone is now online!');
-  } catch (error) {
-    logger.error('Failed to start application:', error);
-    process.exit(1);
-  }
-}
-
-main();
-
-// Handle process termination
-process.on('SIGINT', () => {
-  logger.info('Shutting down...');
-  client.destroy();
-  process.exit(0);
+client.on('interactionCreate', async (interaction) => {
+  await handleInteraction(interaction);
 });
 
-process.on('unhandledRejection', (error) => {
-  logger.error('Unhandled promise rejection:', error);
-});
+import './web-admin';
+
+client.login(process.env.DISCORD_BOT_TOKEN);
