@@ -55,6 +55,46 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'createShapeModal') {
+      const backstory = interaction.fields.getTextInputValue('backstoryInput');
+      const tone = interaction.fields.getTextInputValue('toneInput');
+      const likesDislikes = interaction.fields.getTextInputValue('likesDislikesInput');
+
+      const shape = {
+        backstory,
+        tone,
+        likesDislikes,
+      };
+
+      const client = interaction.client as ExtendedClient;
+      if (!client.shapes) {
+        client.shapes = [];
+      }
+      client.shapes.push(shape);
+
+      await interaction.reply({ content: `Shape created with backstory: ${backstory}, tone: ${tone}, likes/dislikes: ${likesDislikes}` });
+    }
+  }
+
+  if (!interaction.isCommand()) return;
+
+  console.log(`Received command: ${interaction.commandName}`);
+  const command = client.commands.get(interaction.commandName);
+  if (!command) {
+    console.warn(`Command not found: ${interaction.commandName}`);
+    return;
+  }
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: 'There was an error executing this command!', ephemeral: true });
+  }
+});
+
 // Register commands for the guild during development
 const GUILD_ID = '1311157466935070790'; // Replace with your Discord server's guild ID
 client.once('ready', async () => {
