@@ -1,19 +1,23 @@
 {
+  "dependencies": {
+    "@discordjs/builders": "^1.10.1",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
   "name": "shapes-clone",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Cline",
   "license": "ISC",
   "description": "",
-  "dependencies": {
+  "devDependencies": {
     "@types/node": "^22.13.1",
-    "discord.js": "^14.17.3",
-    "express": "^4.21.2",
-    "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   }
 }
