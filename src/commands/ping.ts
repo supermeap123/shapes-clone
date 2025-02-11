@@ -5,5 +5,6 @@ export const data = new SlashCommandBuilder()
   .setDescription('Replies with Pong!');
 
 export const execute = async (interaction: any) => {
-  await interaction.reply('Pong!');
+  const latency = Date.now() - interaction.createdTimestamp;
+  await interaction.reply(`Pong! Latency is ${latency}ms`);
 };
