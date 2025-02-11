@@ -55,6 +55,8 @@ Completed Tasks:
 [x] Enhanced /recommend command to use dynamic prompt based on shapes.
 [x] Enhanced /train-model command to log training initiation.
 [x] Project documented in README.md.
+[x] Implemented Pinecone client initialization in src/integrations/pinecone.ts
+[x] Modified src/integrations/openrouter.ts to fetch available models and context lengths.
 
 Pending / Undone Tasks (Next Steps):
 1. Implement Dynamic Model Selection:
@@ -94,4 +96,3 @@ Summary of Next Steps:
 - Build and integrate a complete web administration interface for secure and comprehensive bot management.
 - Strengthen memory management and logging for robust, long-term operation.
 - Finalize testing and update documentation to cover all advanced features.
-[x] Implemented Pinecone client initialization in src/integrations/pinecone.ts
