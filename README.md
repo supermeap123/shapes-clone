@@ -57,6 +57,7 @@ Completed Tasks:
 [x] Project documented in README.md.
 [x] Implemented Pinecone client initialization in src/integrations/pinecone.ts
 [x] Modified src/integrations/openrouter.ts to fetch available models and context lengths.
+[x] Enhanced src/memory/memoryManager.ts for short-term context tracking.
 
 Pending / Undone Tasks (Next Steps):
 1. Implement Dynamic Model Selection:
