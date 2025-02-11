@@ -5,5 +5,7 @@ export const data = new SlashCommandBuilder()
   .setDescription('Retrieves an invite link.');
 
 export const execute = async (interaction: any) => {
-  await interaction.reply('Invite link retrieved!');
+  const clientId = interaction.client.user.id;
+  const inviteLink = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`;
+  await interaction.reply(`Invite the bot using this link: ${inviteLink}`);
 };
