@@ -25,25 +25,10 @@ export async function fetchResponse(model: string, prompt: string) {
   }
 }
 
-export interface OpenRouterModel {
-  id: string;
-  name: string;
-  context_length: number;
-  pricing: {
-    prompt: number;
-    completion: number;
-  };
-}
-
-export async function getAvailableModels(): Promise<OpenRouterModel[]> {
+export async function getAvailableModels() {
   try {
     const response = await openRouterClient.get('/models');
-    return response.data.data.map((model: any) => ({
-      id: model.id,
-      name: model.name,
-      context_length: model.context_length,
-      pricing: model.pricing,
-    }));
+    return response.data.data;
   } catch (error: any) {
     console.error('OpenRouter API Error:', error.message);
     throw new Error(`Failed to fetch available models from OpenRouter: ${error.message}`);
