@@ -1,96 +1,168 @@
-Shapes.inc Clone Bot - Enhanced Progress Sheet
-===============================================
+# Shapes Clone - AI Personality Management API
 
-Project Overview:
-- A fully featured clone of shapes.inc built with TypeScript and Discord.js.
-- Incorporates advanced AI inference via OpenRouter, dynamic model selection,
-  a comprehensive web administration interface, robust memory management, and logging.
-- Designed to provide dynamic, personalized interactions in Discord with administrative control via a web UI.
+A comprehensive API for managing AI personalities (shapes) with customizable profiles, behaviors, and settings.
 
-Project Structure:
-├── src/
-│   ├── index.ts                // Entry point: initializes the Discord bot and web UI server.
-│   ├── utils/
-│   │   └── ExtendedClient.ts   // Custom extension of Discord.js Client with extra functionalities.
-│   ├── commands/               // Command modules for Discord interactions.
-│   │   ├── ping.ts             // /ping command: tests responsiveness.
-│   │   ├── activate.ts         // /activate command: activates the bot.
-│   │   ├── deactivate.ts       // /deactivate command: deactivates the bot.
-│   │   ├── configure.ts        // /configure command: updates bot settings.
-│   │   ├── create-shape.ts     // /create-shape command: creates a new shape.
-│   │   ├── dashboard.ts        // /dashboard command: opens admin dashboard.
-│   │   ├── debug.ts            // /debug command: initiates a debugging session.
-│   │   ├── generate-image.ts   // /generate-image command: generates an image via AI.
-│   │   ├── invite.ts           // /invite command: retrieves a bot invite link.
-│   │   ├── recommend.ts        // /recommend command: produces dynamic recommendations.
-│   │   └── train-model.ts      // /train-model command: triggers AI model training.
-│   ├── integrations/           // Modules to integrate with external services.
-│   │   ├── openrouter.ts       // OpenRouter integration: handles AI inference requests.
-│   │   └── models.ts           // Dynamic model selection: fetches and manages available AI models.
-│   ├── webui/                  // Web administration interface.
-│   │   ├── server.ts           // Express server for admin UI.
-│   │   ├── routes.ts           // API routes for configuration and monitoring.
-│   │   └── views/              // Front-end components (HTML/CSS/JS or React components).
-│   ├── memory/                 // Modules for conversation and memory management.
-│   │   └── memoryManager.ts    // Handles short-term and long-term memory storage.
-│   └── logger/                 // Logging and error-handling modules.
-│       └── logger.ts           // Centralized logging for debugging and monitoring.
-└── README.md                   // Documentation for setup, configuration, and usage.
+## Features
 
-Completed Tasks:
-[x] Set up project structure with all primary directories and modules.
-[x] Implemented basic bot functionality with command registration.
-[x] Created initial commands:
-      - /ping, /activate, /deactivate, /configure, /create-shape,
-        /dashboard, /debug, /generate-image, /invite, /recommend, /train-model.
-[x] Basic text-based responses for all commands.
-[x] Enhanced /ping command to include latency.
-[x] Enhanced /activate and /deactivate commands to update bot's internal state.
-[x] Enhanced /configure command to display .env contents.
-[x] Enhanced /create-shape command to use modals and store shape data.
-[x] Enhanced /dashboard command to display dashboard URL.
-[x] Enhanced /debug command to display diagnostic information.
-[x] Enhanced /generate-image command to use OpenAI API for image generation.
-[x] Enhanced /invite command to display invite link.
-[x] Enhanced /recommend command to use dynamic prompt based on shapes.
-[x] Enhanced /train-model command to log training initiation.
-[x] Project documented in README.md.
+- Complete shape management with customizable profiles
+- Personality and behavior configuration
+- Free will and autonomous behavior settings
+- Knowledge base and training management
+- AI engine configuration with multiple model support
+- Image generation capabilities
+- Voice response integration
+- Advanced settings and privacy controls
+- JWT-based authentication and authorization
+- Role-based access control
+- MongoDB integration
+- Cloudinary integration for media storage
+- Comprehensive error handling
+- API rate limiting
+- CORS support
 
-Pending / Undone Tasks (Next Steps):
-1. Implement Dynamic Model Selection:
-   - Create an API endpoint in src/integrations/models.ts to fetch available AI models from OpenRouter.
-   - Allow administrators to select primary and fallback models via dynamic configuration.
-   // Example Pseudocode:
-   // const models = await getAvailableModels();
-   // setCurrentModel(models.primary);
+## Prerequisites
 
-2. Develop the Web Administration Interface:
-   - Build an Express server in src/webui/server.ts to serve the admin dashboard.
-   - Create UI components (using React or standard HTML/CSS/JS) for:
-       • Secure login with authentication and role-based access.
-       • Dashboard to display bot status, metrics, and logs.
-       • Configuration forms to set the Discord bot token, intents, command toggles, and privacy settings.
-       • Personality configuration screens for custom backstories, tone, and event-specific messages.
-       • Server-specific settings for welcome messages, chat revival triggers, and ignore lists.
-   // Example Pseudocode:
-   // app.get('/dashboard', (req, res) => { res.render('dashboard', { metrics }); });
+- Node.js (v16 or higher)
+- MongoDB (v4.4 or higher)
+- Redis (optional, for caching)
+- Cloudinary account (for image uploads)
+- OpenAI API key
+- OpenPipe API key
+- Stable Diffusion API key (for image generation)
+- ElevenLabs API key (for voice generation)
 
-3. Improve Memory and Context Management:
-   - Enhance src/memory/memoryManager.ts to handle both short-term and long-term memory.
-   // Example Pseudocode:
-   // function storeMessage(userId: string, message: string) { /* update memory store */ }
+## Installation
 
-4. Implement Robust Logging and Error Handling:
-   - Develop a centralized logger in src/logger/logger.ts to capture command usage, integration errors, and system metrics.
-   // Example Pseudocode:
-   // logger.info('Command executed: /activate by user:', userId);
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/shapes-clone.git
+   cd shapes-clone
+   ```
 
-5. Comprehensive Testing and Documentation:
-   - Write unit tests and integration tests for each new module: command handlers, integration modules, web UI, memory management, and logging.
-   - Update the README and additional documentation with setup instructions, configuration details, and troubleshooting guides.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Summary of Next Steps:
-- Implement dynamic model selection to enable flexible AI behavior.
-- Build and integrate a complete web administration interface for secure and comprehensive bot management.
-- Strengthen memory management and logging for robust, long-term operation.
-- Finalize testing and update documentation to cover all advanced features.
+3. Create a .env file based on .env.example:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Update the .env file with your configuration values.
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## API Endpoints
+
+### Profile Management
+- `GET /api/v1/profile/:shapeId` - Get shape profile
+- `PUT /api/v1/profile/:shapeId` - Update shape profile
+
+### Personality Configuration
+- `GET /api/v1/personality/:shapeId` - Get personality settings
+- `PUT /api/v1/personality/:shapeId` - Update personality settings
+
+### Free Will Settings
+- `GET /api/v1/freewill/:shapeId` - Get free will settings
+- `PUT /api/v1/freewill/:shapeId` - Update free will settings
+- `PUT /api/v1/freewill/:shapeId/reactions` - Update reactions settings
+- `PUT /api/v1/freewill/:shapeId/keywords` - Update keywords of interest
+
+### Knowledge Management
+- `GET /api/v1/knowledge/:shapeId` - Get knowledge settings
+- `PUT /api/v1/knowledge/:shapeId` - Update knowledge settings
+- `PUT /api/v1/knowledge/:shapeId/general` - Update general knowledge
+- `PUT /api/v1/knowledge/:shapeId/commands` - Update commands
+- `PUT /api/v1/knowledge/:shapeId/relationships` - Update relationships
+
+### Training Management
+- `GET /api/v1/training/:shapeId` - Get training settings
+- `PUT /api/v1/training/:shapeId` - Update training settings
+- `POST /api/v1/training/:shapeId/snippets` - Add conversation snippet
+- `DELETE /api/v1/training/:shapeId/snippets/:index` - Remove conversation snippet
+
+### AI Engine Configuration
+- `GET /api/v1/ai-engine/:shapeId` - Get AI engine settings
+- `PUT /api/v1/ai-engine/:shapeId` - Update AI engine settings
+- `PUT /api/v1/ai-engine/:shapeId/memory` - Update memory settings
+- `PUT /api/v1/ai-engine/:shapeId/language-presets` - Update language presets
+- `PUT /api/v1/ai-engine/:shapeId/engine-presets` - Update engine presets
+
+### Image Engine Configuration
+- `GET /api/v1/image-engine/:shapeId` - Get image engine settings
+- `PUT /api/v1/image-engine/:shapeId` - Update image engine settings
+- `PUT /api/v1/image-engine/:shapeId/size-options` - Update image size options
+- `PUT /api/v1/image-engine/:shapeId/command-prefix` - Update command prefix
+- `PUT /api/v1/image-engine/:shapeId/preset` - Update image preset
+
+### Voice Engine Configuration
+- `GET /api/v1/voice-engine/:shapeId` - Get voice engine settings
+- `PUT /api/v1/voice-engine/:shapeId` - Update voice engine settings
+- `PUT /api/v1/voice-engine/:shapeId/toggle` - Toggle voice responses
+
+### Settings Management
+- `GET /api/v1/settings/:shapeId` - Get general settings
+- `PUT /api/v1/settings/:shapeId` - Update general settings
+- `PUT /api/v1/settings/:shapeId/privacy` - Update privacy settings
+- `PUT /api/v1/settings/:shapeId/messages` - Update custom messages
+- `PUT /api/v1/settings/:shapeId/commands` - Update slash commands
+
+### Admin Routes
+- `GET /api/v1/admin/profile` - Get all profiles (admin only)
+- `PUT /api/v1/admin/profile` - Bulk update profiles (admin only)
+
+## Authentication
+
+All routes except health check require JWT authentication. Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer your-jwt-token
+```
+
+## Error Handling
+
+The API uses standard HTTP status codes and returns errors in the following format:
+
+```json
+{
+  "success": false,
+  "message": "Error message here",
+  "error": {
+    "code": "ERROR_CODE",
+    "details": "Additional error details if available"
+  }
+}
+```
+
+## Development
+
+1. Run tests:
+   ```bash
+   npm test
+   ```
+
+2. Run linting:
+   ```bash
+   npm run lint
+   ```
+
+3. Build for production:
+   ```bash
+   npm run build
+   ```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

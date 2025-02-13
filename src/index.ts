@@ -1,125 +1,101 @@
-import { GatewayIntentBits } from 'discord.js';
-import path from 'path';
-import fs from 'fs';
-import { config } from 'dotenv';
-import { REST, Routes } from 'discord.js';
-import { ExtendedClient } from './utils/ExtendedClient';
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
+import { connectDB } from './config/database';
+import { errorHandler } from './middleware/errorHandler';
 
-// Load environment variables from .env file
-config();
+// Import routes
+import profileRoutes from './routes/profile.routes';
+import personalityRoutes from './routes/personality.routes';
+import freeWillRoutes from './routes/freewill.routes';
+import knowledgeRoutes from './routes/knowledge.routes';
+import trainingRoutes from './routes/training.routes';
+import aiEngineRoutes from './routes/aiengine.routes';
+import imageEngineRoutes from './routes/imageengine.routes';
+import voiceEngineRoutes from './routes/voiceengine.routes';
+import settingsRoutes from './routes/settings.routes';
+import adminRoutes from './routes/admin.routes';
 
-// Create a new Discord client
-const client = new ExtendedClient({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-});
-
-// Load command handlers
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
-
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  if ('data' in command && 'execute' in command) {
-    client.commands.set(command.data.name, command);
-  } else {
-    console.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-  }
+// Load environment variables
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
-// Event handler for when the bot is ready
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user?.tag}`);
+if (!process.env.MONGODB_URI) {
+  throw new Error('MONGODB_URI is not defined in environment variables');
+}
+
+// Connect to MongoDB
+connectDB();
+
+const app = express();
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
 });
 
-// Event handler for interactions
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
+// API routes
+const apiRouter = express.Router();
+app.use('/api/v1', apiRouter);
 
-  console.log(`Received command: ${interaction.commandName}`);
-  const command = client.commands.get(interaction.commandName);
-  if (!command) {
-    console.warn(`Command not found: ${interaction.commandName}`);
-    return;
-  }
+apiRouter.use('/profile', profileRoutes);
+apiRouter.use('/personality', personalityRoutes);
+apiRouter.use('/freewill', freeWillRoutes);
+apiRouter.use('/knowledge', knowledgeRoutes);
+apiRouter.use('/training', trainingRoutes);
+apiRouter.use('/ai-engine', aiEngineRoutes);
+apiRouter.use('/image-engine', imageEngineRoutes);
+apiRouter.use('/voice-engine', voiceEngineRoutes);
+apiRouter.use('/settings', settingsRoutes);
+apiRouter.use('/admin', adminRoutes);
 
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: 'There was an error executing this command!', ephemeral: true });
-  }
+// Error handling
+app.use(errorHandler);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
 });
 
-client.on('interactionCreate', async (interaction) => {
-  if (interaction.isModalSubmit()) {
-    if (interaction.customId === 'createShapeModal') {
-      const backstory = interaction.fields.getTextInputValue('backstoryInput');
-      const tone = interaction.fields.getTextInputValue('toneInput');
-      const likesDislikes = interaction.fields.getTextInputValue('likesDislikesInput');
+const PORT = process.env.PORT || 5000;
 
-      const shape = {
-        backstory,
-        tone,
-        likesDislikes,
-      };
-
-      const client = interaction.client as ExtendedClient;
-      if (!client.shapes) {
-        client.shapes = [];
-      }
-      client.shapes.push(shape);
-
-      await interaction.reply({ content: `Shape created with backstory: ${backstory}, tone: ${tone}, likes/dislikes: ${likesDislikes}` });
-    }
-  }
-
-  if (!interaction.isCommand()) return;
-
-  console.log(`Received command: ${interaction.commandName}`);
-  const command = client.commands.get(interaction.commandName);
-  if (!command) {
-    console.warn(`Command not found: ${interaction.commandName}`);
-    return;
-  }
-
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: 'There was an error executing this command!', ephemeral: true });
-  }
+const server = app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
-// Register commands for the guild during development
-const GUILD_ID = '1311157466935070790'; // Replace with your Discord server's guild ID
-client.once('ready', async () => {
-  console.log(`Logged in as ${client.user?.tag}`);
-
-  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN!);
-  try {
-    console.log('Started refreshing application (/) commands.');
-
-    if (!client.user?.id) {
-      console.error('Client user ID is undefined.');
-      return;
-    }
-
-    await rest.put(
-      Routes.applicationGuildCommands(client.user.id, GUILD_ID),
-      { body: Array.from(client.commands.values()).map(cmd => cmd.data.toJSON()) },
-    );
-
-    console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error(error);
-  }
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err: Error) => {
+  console.error(`Error: ${err.message}`);
+  // Close server & exit process
+  server.close(() => process.exit(1));
 });
 
-// Log in to Discord
-console.log('Discord Bot Token:', process.env.DISCORD_BOT_TOKEN);
-client.login(process.env.DISCORD_BOT_TOKEN);
+// Handle uncaught exceptions
+process.on('uncaughtException', (err: Error) => {
+  console.error(`Error: ${err.message}`);
+  // Close server & exit process
+  server.close(() => process.exit(1));
+});
+
+export default app;

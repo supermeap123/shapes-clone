@@ -1,41 +1,49 @@
 # Dependencies
 node_modules/
-.pnp/
-.pnp.js
-
-# Testing
-coverage/
-.nyc_output/
-
-# Production
-dist/
-build/
-
-# Development
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-logs/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Editor directories and files
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
-*.sublime-workspace
-*.sublime-project
+*.swn
+*.bak
 
-# TypeScript cache
+# Testing
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# TypeScript
 *.tsbuildinfo
+
+# Temporary files
+tmp/
+temp/
+
+# Debug
+.debug/
+
+# Production
+.env.production
 
 # Optional npm cache directory
 .npm
@@ -52,19 +60,5 @@ yarn-error.log*
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variable files
-.env
-.env.test
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# Jest
-coverage/
+# Cloudinary uploads
+uploads/
