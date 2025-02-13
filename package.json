@@ -1,12 +1,16 @@
 {
   "name": "shapes-clone",
   "version": "1.0.0",
-  "description": "AI Personality Management API",
+  "description": "AI Personality Management System",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "dev:api": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev:web": "cd src/webui && npm start",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build:api": "tsc",
+    "build:web": "cd src/webui && npm run build",
+    "build": "npm run build:api && npm run build:web",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -22,7 +26,8 @@
     "api",
     "typescript",
     "express",
-    "mongodb"
+    "mongodb",
+    "react"
   ],
   "author": "",
   "license": "MIT",
@@ -53,6 +58,7 @@
     "@types/supertest": "^2.0.14",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
+    "concurrently": "^8.2.2",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
