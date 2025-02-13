@@ -30,9 +30,24 @@
       "@hooks/*": ["hooks/*"],
       "@types/*": ["types/*"],
       "@theme/*": ["theme/*"]
-    }
+    },
+    "types": [
+      "node",
+      "react",
+      "react-dom",
+      "jest"
+    ]
   },
   "include": [
-    "src"
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "scripts",
+    "acceptance-tests",
+    "webpack",
+    "jest",
+    "src/setupTests.ts"
   ]
 }

@@ -16,11 +16,11 @@ const initialState: ShapesState = {
   error: null,
 };
 
-export const fetchShapes = createAsyncThunk(
+export const fetchShapes = createAsyncThunk<IShape[]>(
   'shapes/fetchShapes',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/v1/shapes');
+      const response = await axios.get<{ data: IShape[] }>('/api/v1/shapes');
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch shapes');
@@ -28,11 +28,11 @@ export const fetchShapes = createAsyncThunk(
   }
 );
 
-export const fetchShapeById = createAsyncThunk(
+export const fetchShapeById = createAsyncThunk<IShape, string>(
   'shapes/fetchShapeById',
-  async (shapeId: string, { rejectWithValue }) => {
+  async (shapeId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/v1/shapes/${shapeId}`);
+      const response = await axios.get<{ data: IShape }>(`/api/v1/shapes/${shapeId}`);
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch shape');
@@ -40,11 +40,16 @@ export const fetchShapeById = createAsyncThunk(
   }
 );
 
-export const updateShape = createAsyncThunk(
+interface UpdateShapePayload {
+  shapeId: string;
+  data: Partial<IShape>;
+}
+
+export const updateShape = createAsyncThunk<IShape, UpdateShapePayload>(
   'shapes/updateShape',
-  async ({ shapeId, data }: { shapeId: string; data: Partial<IShape> }, { rejectWithValue }) => {
+  async ({ shapeId, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`/api/v1/shapes/${shapeId}`, data);
+      const response = await axios.put<{ data: IShape }>(`/api/v1/shapes/${shapeId}`, data);
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update shape');

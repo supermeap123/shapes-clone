@@ -89,6 +89,12 @@ export interface IImageEngine {
 
 export interface IVoiceEngine {
   voiceResponses?: boolean;
+  engine?: string;
+  style?: string;
+  pitch?: number;
+  speed?: number;
+  stability?: number;
+  similarity?: number;
 }
 
 export interface ISettings {
