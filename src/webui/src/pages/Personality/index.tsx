@@ -1,33 +1,40 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
+  Container,
+  Typography,
   TextField,
   Button,
-  Typography,
-  FormControl,
-  InputLabel,
+  Grid,
+  Paper,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
   Chip,
-  OutlinedInput,
-  SelectChangeEvent,
+  Box,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useAppSelector } from '../../store';
 import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
 
 const personalityTraits = [
-  'Analytical', 'Creative', 'Empathetic', 'Formal',
-  'Friendly', 'Humorous', 'Logical', 'Professional',
-  'Witty', 'Casual', 'Serious', 'Technical'
+  'Analytical',
+  'Creative',
+  'Empathetic',
+  'Formal',
+  'Friendly',
+  'Humorous',
+  'Professional',
+  'Witty',
 ];
 
-const toneOptions = [
-  'Professional', 'Casual', 'Friendly', 'Formal',
-  'Technical', 'Conversational', 'Academic', 'Playful'
+const tones = [
+  'Casual',
+  'Formal',
+  'Professional',
+  'Friendly',
+  'Technical',
+  'Educational',
 ];
 
 const Personality: React.FC = () => {
@@ -36,208 +43,181 @@ const Personality: React.FC = () => {
   const { currentShape, loading } = useAppSelector((state) => state.shapes);
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('');
+  const [age, setAge] = useState<number | ''>('');
+  const [history, setHistory] = useState('');
+  const [likes, setLikes] = useState('');
+  const [dislikes, setDislikes] = useState('');
+  const [conversationalGoals, setConversationalGoals] = useState('');
+  const [conversationalExamples, setConversationalExamples] = useState('');
 
   useEffect(() => {
     if (shapeId) {
       dispatch(fetchShapeById(shapeId));
     }
-  }, [dispatch, shapeId]);
+  }, [shapeId, dispatch]);
 
   useEffect(() => {
     if (currentShape) {
-      setSelectedTraits(currentShape.personality.personalityTraits || []);
+      setSelectedTraits(currentShape.personality.traits || []);
       setSelectedTone(currentShape.personality.tone || '');
+      setAge(currentShape.personality.age || '');
+      setHistory(currentShape.personality.history || '');
+      setLikes(currentShape.personality.likes || '');
+      setDislikes(currentShape.personality.dislikes || '');
+      setConversationalGoals(currentShape.personality.conversationalGoals || '');
+      setConversationalExamples(currentShape.personality.conversationalExamples || '');
     }
   }, [currentShape]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentShape && shapeId) {
+  const handleSave = () => {
+    if (shapeId && currentShape) {
       dispatch(updateShape({
         shapeId,
-        data: {
+        updates: {
           personality: {
             ...currentShape.personality,
-            personalityTraits: selectedTraits,
+            traits: selectedTraits,
             tone: selectedTone,
+            age: age || undefined,
+            history,
+            likes,
+            dislikes,
+            conversationalGoals,
+            conversationalExamples,
           }
         }
       }));
     }
   };
 
-  const handleTraitsChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    setSelectedTraits(typeof value === 'string' ? value.split(',') : value);
-  };
-
-  const handleToneChange = (event: SelectChangeEvent<string>) => {
-    setSelectedTone(event.target.value);
-  };
-
-  if (loading || !currentShape) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading personality settings...</Typography>
-      </Box>
+  const handleTraitToggle = (trait: string) => {
+    setSelectedTraits((prev) =>
+      prev.includes(trait)
+        ? prev.filter((t) => t !== trait)
+        : [...prev, trait]
     );
-  }
+  };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
         Personality Settings
       </Typography>
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Personality Traits
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {personalityTraits.map((trait) => (
+                <Chip
+                  key={trait}
+                  label={trait}
+                  onClick={() => handleTraitToggle(trait)}
+                  color={selectedTraits.includes(trait) ? 'primary' : 'default'}
+                  variant={selectedTraits.includes(trait) ? 'filled' : 'outlined'}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Basic Personality */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Basic Personality
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Nickname"
-                    defaultValue={currentShape.personality.nickname}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Tone</InputLabel>
-                    <Select
-                      value={selectedTone}
-                      label="Tone"
-                      onChange={handleToneChange}
-                    >
-                      {toneOptions.map((tone) => (
-                        <MenuItem key={tone} value={tone}>
-                          {tone}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Personality Traits</InputLabel>
-                    <Select
-                      multiple
-                      value={selectedTraits}
-                      onChange={handleTraitsChange}
-                      input={<OutlinedInput label="Personality Traits" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => (
-                            <Chip key={value} label={value} />
-                          ))}
-                        </Box>
-                      )}
-                    >
-                      {personalityTraits.map((trait) => (
-                        <MenuItem key={trait} value={trait}>
-                          {trait}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel>Tone</InputLabel>
+              <Select
+                value={selectedTone}
+                onChange={(e) => setSelectedTone(e.target.value)}
+                label="Tone"
+              >
+                {tones.map((tone) => (
+                  <MenuItem key={tone} value={tone}>
+                    {tone}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
 
-        {/* Background */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Background
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Short Backstory"
-                    defaultValue={currentShape.personality.shortBackstory}
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Likes"
-                    defaultValue={currentShape.personality.likes}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Dislikes"
-                    defaultValue={currentShape.personality.dislikes}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Age"
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value ? Number(e.target.value) : '')}
+              inputProps={{ min: 0 }}
+            />
+          </Grid>
 
-        {/* Conversation Style */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Conversation Style
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Conversational Goals"
-                    defaultValue={currentShape.personality.conversationalGoals}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Conversational Examples"
-                    defaultValue={currentShape.personality.conversationalExamples}
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                    helperText="Provide example conversations to guide the AI's communication style"
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="History"
+              value={history}
+              onChange={(e) => setHistory(e.target.value)}
+              multiline
+              rows={4}
+            />
+          </Grid>
 
-        {/* Actions */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Likes"
+              value={likes}
+              onChange={(e) => setLikes(e.target.value)}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Dislikes"
+              value={dislikes}
+              onChange={(e) => setDislikes(e.target.value)}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Conversational Goals"
+              value={conversationalGoals}
+              onChange={(e) => setConversationalGoals(e.target.value)}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Conversational Examples"
+              value={conversationalExamples}
+              onChange={(e) => setConversationalExamples(e.target.value)}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={loading}
+            >
               Save Changes
             </Button>
-          </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Paper>
+    </Container>
   );
 };
 

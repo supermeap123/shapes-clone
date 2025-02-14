@@ -2,57 +2,48 @@ import React from 'react';
 import {
   AppBar,
   Toolbar,
-  IconButton,
   Typography,
+  IconButton,
   Button,
-  useTheme,
   styled,
-  Box,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  AccountCircle,
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import { toggleSidebar, toggleDarkMode } from '../../store/slices/uiSlice';
+import { useDispatch, useAppSelector } from '../../store';
+import { toggleDarkMode } from '../../store/slices/uiSlice';
 import { logout } from '../../store/slices/authSlice';
 
 interface TopBarProps {
   drawerWidth: number;
+  sidebarOpen: boolean;
+  onDrawerToggle: () => void;
 }
 
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'drawerWidth',
 })<{ drawerWidth: number }>(({ theme, drawerWidth }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  width: `calc(100% - ${drawerWidth}px)`,
+  marginLeft: `${drawerWidth}px`,
   transition: theme.transitions.create(['margin', 'width'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(true && {
-    width: `calc(100% - ${drawerWidth}px)`,
-    marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
+    easing: theme.transitions.easing.easeOut,
+    duration: theme.transitions.duration.enteringScreen,
   }),
 }));
 
-const TopBar: React.FC<TopBarProps> = ({ drawerWidth }) => {
-  const theme = useTheme();
+const TopBar: React.FC<TopBarProps> = ({
+  drawerWidth,
+  sidebarOpen,
+  onDrawerToggle,
+}) => {
   const dispatch = useDispatch();
-  const { darkMode } = useSelector((state: RootState) => state.ui);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { darkMode } = useAppSelector((state) => state.ui);
 
-  const handleToggleSidebar = () => {
-    dispatch(toggleSidebar());
-  };
-
-  const handleToggleDarkMode = () => {
+  const handleDarkModeToggle = () => {
     dispatch(toggleDarkMode());
   };
 
@@ -65,10 +56,10 @@ const TopBar: React.FC<TopBarProps> = ({ drawerWidth }) => {
       <Toolbar>
         <IconButton
           color="inherit"
-          aria-label="toggle sidebar"
-          onClick={handleToggleSidebar}
+          aria-label="toggle drawer"
+          onClick={onDrawerToggle}
           edge="start"
-          sx={{ mr: 2 }}
+          sx={{ mr: 2, ...(sidebarOpen && { display: 'none' }) }}
         >
           <MenuIcon />
         </IconButton>
@@ -77,26 +68,18 @@ const TopBar: React.FC<TopBarProps> = ({ drawerWidth }) => {
           Shapes Admin
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton color="inherit" onClick={handleToggleDarkMode}>
-            {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
+        <IconButton color="inherit" onClick={handleDarkModeToggle}>
+          {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+        </IconButton>
 
-          {user && (
-            <>
-              <Button
-                color="inherit"
-                startIcon={<AccountCircle />}
-                sx={{ textTransform: 'none' }}
-              >
-                {user.username}
-              </Button>
-              <IconButton color="inherit" onClick={handleLogout}>
-                <LogoutIcon />
-              </IconButton>
-            </>
-          )}
-        </Box>
+        <Button
+          color="inherit"
+          onClick={handleLogout}
+          startIcon={<LogoutIcon />}
+          sx={{ ml: 1 }}
+        >
+          Logout
+        </Button>
       </Toolbar>
     </StyledAppBar>
   );

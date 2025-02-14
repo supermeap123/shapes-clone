@@ -1,39 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
+  Container,
+  Typography,
   TextField,
   Button,
-  Typography,
+  Grid,
+  Paper,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Box,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useAppSelector } from '../../store';
 import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
 
 interface CommandDialogState {
   open: boolean;
-  command: {
-    name: string;
-    response: string;
-  };
-  isEdit: boolean;
-  editIndex?: number;
+  name: string;
+  response: string;
 }
 
 const Knowledge: React.FC = () => {
@@ -42,17 +31,18 @@ const Knowledge: React.FC = () => {
   const { currentShape, loading } = useAppSelector((state) => state.shapes);
   const [generalKnowledge, setGeneralKnowledge] = useState<string[]>([]);
   const [commands, setCommands] = useState<Array<{ name: string; response: string }>>([]);
+  const [newKnowledge, setNewKnowledge] = useState('');
   const [commandDialog, setCommandDialog] = useState<CommandDialogState>({
     open: false,
-    command: { name: '', response: '' },
-    isEdit: false,
+    name: '',
+    response: '',
   });
 
   useEffect(() => {
     if (shapeId) {
       dispatch(fetchShapeById(shapeId));
     }
-  }, [dispatch, shapeId]);
+  }, [shapeId, dispatch]);
 
   useEffect(() => {
     if (currentShape) {
@@ -61,12 +51,11 @@ const Knowledge: React.FC = () => {
     }
   }, [currentShape]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentShape && shapeId) {
+  const handleSave = () => {
+    if (shapeId && currentShape) {
       dispatch(updateShape({
         shapeId,
-        data: {
+        updates: {
           knowledge: {
             ...currentShape.knowledge,
             generalKnowledge,
@@ -77,163 +66,146 @@ const Knowledge: React.FC = () => {
     }
   };
 
-  const handleAddCommand = () => {
-    setCommandDialog({
-      open: true,
-      command: { name: '', response: '' },
-      isEdit: false,
-    });
-  };
-
-  const handleEditCommand = (index: number) => {
-    setCommandDialog({
-      open: true,
-      command: commands[index],
-      isEdit: true,
-      editIndex: index,
-    });
-  };
-
-  const handleDeleteCommand = (index: number) => {
-    const newCommands = [...commands];
-    newCommands.splice(index, 1);
-    setCommands(newCommands);
-  };
-
-  const handleSaveCommand = () => {
-    if (commandDialog.isEdit && typeof commandDialog.editIndex === 'number') {
-      const newCommands = [...commands];
-      newCommands[commandDialog.editIndex] = commandDialog.command;
-      setCommands(newCommands);
-    } else {
-      setCommands([...commands, commandDialog.command]);
+  const handleAddKnowledge = () => {
+    if (newKnowledge && !generalKnowledge.includes(newKnowledge)) {
+      setGeneralKnowledge([...generalKnowledge, newKnowledge]);
+      setNewKnowledge('');
     }
-    setCommandDialog({ ...commandDialog, open: false });
   };
 
-  if (loading || !currentShape) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading knowledge settings...</Typography>
-      </Box>
-    );
-  }
+  const handleRemoveKnowledge = (knowledge: string) => {
+    setGeneralKnowledge(generalKnowledge.filter((k) => k !== knowledge));
+  };
+
+  const handleAddCommand = () => {
+    if (commandDialog.name && commandDialog.response) {
+      setCommands([
+        ...commands,
+        { name: commandDialog.name, response: commandDialog.response },
+      ]);
+      setCommandDialog({ open: false, name: '', response: '' });
+    }
+  };
+
+  const handleRemoveCommand = (name: string) => {
+    setCommands(commands.filter((c) => c.name !== name));
+  };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
-        Knowledge Settings
+        Knowledge Base
       </Typography>
-
-      <Grid container spacing={3}>
-        {/* General Knowledge */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                General Knowledge
-              </Typography>
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              General Knowledge
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField
                 fullWidth
-                multiline
-                rows={6}
-                variant="outlined"
-                placeholder="Enter general knowledge about the shape's personality, background, or special knowledge..."
-                value={generalKnowledge.join('\n')}
-                onChange={(e) => setGeneralKnowledge(e.target.value.split('\n').filter(Boolean))}
+                value={newKnowledge}
+                onChange={(e) => setNewKnowledge(e.target.value)}
+                placeholder="Add knowledge"
+                size="small"
               />
-            </CardContent>
-          </Card>
-        </Grid>
+              <IconButton onClick={handleAddKnowledge} color="primary">
+                <AddIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {generalKnowledge.map((knowledge, index) => (
+                <Chip
+                  key={index}
+                  label={knowledge}
+                  onDelete={() => handleRemoveKnowledge(knowledge)}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-        {/* Commands */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Commands
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddCommand}
-                >
-                  Add Command
-                </Button>
-              </Box>
-              <List>
-                {commands.map((command, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText
-                      primary={command.name}
-                      secondary={command.response}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={() => handleEditCommand(index)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton edge="end" onClick={() => handleDeleteCommand(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Commands
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => setCommandDialog({ ...commandDialog, open: true })}
+            >
+              Add Command
+            </Button>
+            <Box sx={{ mt: 2 }}>
+              {commands.map((command, index) => (
+                <Chip
+                  key={index}
+                  label={`${command.name}: ${command.response}`}
+                  onDelete={() => handleRemoveCommand(command.name)}
+                  sx={{ m: 0.5 }}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-        {/* Actions */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={loading}
+            >
               Save Changes
             </Button>
-          </Box>
+          </Grid>
         </Grid>
-      </Grid>
+      </Paper>
 
-      {/* Command Dialog */}
-      <Dialog open={commandDialog.open} onClose={() => setCommandDialog({ ...commandDialog, open: false })}>
-        <DialogTitle>
-          {commandDialog.isEdit ? 'Edit Command' : 'Add Command'}
-        </DialogTitle>
+      <Dialog
+        open={commandDialog.open}
+        onClose={() => setCommandDialog({ ...commandDialog, open: false })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Command</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Command Name"
-              value={commandDialog.command.name}
-              onChange={(e) => setCommandDialog({
-                ...commandDialog,
-                command: { ...commandDialog.command, name: e.target.value }
-              })}
-            />
-            <TextField
-              fullWidth
-              label="Response"
-              multiline
-              rows={4}
-              value={commandDialog.command.response}
-              onChange={(e) => setCommandDialog({
-                ...commandDialog,
-                command: { ...commandDialog.command, response: e.target.value }
-              })}
-            />
-          </Box>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Command Name"
+                value={commandDialog.name}
+                onChange={(e) =>
+                  setCommandDialog({ ...commandDialog, name: e.target.value })
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Response"
+                value={commandDialog.response}
+                onChange={(e) =>
+                  setCommandDialog({ ...commandDialog, response: e.target.value })
+                }
+                multiline
+                rows={4}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCommandDialog({ ...commandDialog, open: false })}>
+          <Button
+            onClick={() => setCommandDialog({ ...commandDialog, open: false })}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSaveCommand} variant="contained" color="primary">
-            Save
+          <Button onClick={handleAddCommand} color="primary">
+            Add
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

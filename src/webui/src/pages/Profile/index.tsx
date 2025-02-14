@@ -1,15 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
+  Container,
+  Typography,
   TextField,
   Button,
-  Typography,
-  Avatar,
+  Grid,
+  Paper,
+  Box,
 } from '@mui/material';
-import { PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useAppSelector } from '../../store';
 import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
@@ -18,143 +16,171 @@ const Profile: React.FC = () => {
   const { shapeId } = useParams<{ shapeId: string }>();
   const dispatch = useDispatch();
   const { currentShape, loading } = useAppSelector((state) => state.shapes);
+  const [profile, setProfile] = useState({
+    nickname: '',
+    description: '',
+    avatar: '',
+    banner: '',
+    vanityUrl: '',
+    appearance: '',
+    initialMessage: '',
+    discordName: '',
+    bio: '',
+  });
 
   useEffect(() => {
     if (shapeId) {
       dispatch(fetchShapeById(shapeId));
     }
-  }, [dispatch, shapeId]);
+  }, [shapeId, dispatch]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentShape && shapeId) {
-      // TODO: Implement file upload for avatar and banner
+  useEffect(() => {
+    if (currentShape) {
+      setProfile({
+        nickname: currentShape.profile.nickname || '',
+        description: currentShape.profile.description || '',
+        avatar: currentShape.profile.avatar || '',
+        banner: currentShape.profile.banner || '',
+        vanityUrl: currentShape.profile.vanityUrl || '',
+        appearance: currentShape.profile.appearance || '',
+        initialMessage: currentShape.profile.initialMessage || '',
+        discordName: currentShape.profile.discordName || '',
+        bio: currentShape.profile.bio || '',
+      });
+    }
+  }, [currentShape]);
+
+  const handleSave = () => {
+    if (shapeId && currentShape) {
       dispatch(updateShape({
         shapeId,
-        data: {
+        updates: {
           profile: {
             ...currentShape.profile,
-            // Add updated fields here
+            ...profile,
           }
         }
       }));
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement file upload
-      console.log('Selected file:', file);
-    }
+  const handleChange = (field: keyof typeof profile) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setProfile({ ...profile, [field]: e.target.value });
   };
 
-  if (loading || !currentShape) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading profile...</Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
         Profile Settings
       </Typography>
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Nickname"
+              value={profile.nickname}
+              onChange={handleChange('nickname')}
+            />
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Avatar Section */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
-                  src={currentShape.profile.avatar}
-                  sx={{ width: 100, height: 100 }}
-                />
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Profile Picture
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    component="label"
-                    startIcon={<PhotoCameraIcon />}
-                  >
-                    Upload Avatar
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleFileChange}
-                    />
-                  </Button>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Description"
+              value={profile.description}
+              onChange={handleChange('description')}
+              multiline
+              rows={3}
+            />
+          </Grid>
 
-        {/* Basic Information */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Basic Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Nickname"
-                    defaultValue={currentShape.profile.nickname}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Discord Name"
-                    defaultValue={currentShape.profile.discordName}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    defaultValue={currentShape.profile.description}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Bio"
-                    defaultValue={currentShape.profile.bio}
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Avatar URL"
+              value={profile.avatar}
+              onChange={handleChange('avatar')}
+            />
+          </Grid>
 
-        {/* Actions */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
-              Save Changes
-            </Button>
-          </Box>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Banner URL"
+              value={profile.banner}
+              onChange={handleChange('banner')}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Vanity URL"
+              value={profile.vanityUrl}
+              onChange={handleChange('vanityUrl')}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Discord Name"
+              value={profile.discordName}
+              onChange={handleChange('discordName')}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Appearance"
+              value={profile.appearance}
+              onChange={handleChange('appearance')}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Initial Message"
+              value={profile.initialMessage}
+              onChange={handleChange('initialMessage')}
+              multiline
+              rows={2}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Bio"
+              value={profile.bio}
+              onChange={handleChange('bio')}
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSave}
+                disabled={loading}
+              >
+                Save Changes
+              </Button>
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Paper>
+    </Container>
   );
 };
 

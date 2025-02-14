@@ -1,37 +1,40 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-interface User {
-  _id: string;
-  username: string;
-  email: string;
-  role: string;
-}
+const API_URL = 'http://localhost:5001/api/v1';
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
+  isAuthenticated: boolean;
+  user: any | null;
   loading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
+  isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('token'),
   loading: false,
   error: null,
-  isAuthenticated: !!localStorage.getItem('token'),
 };
 
-export const login = createAsyncThunk(
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export const login = createAsyncThunk<{ token: string; user: any }, LoginCredentials>(
   'auth/login',
-  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/api/v1/auth/login', credentials);
-      const { token, user } = response.data.data;
+      const response = await axios.post(`${API_URL}/auth/login`, credentials);
+      const { token, user } = response.data;
+      
+      // Store token in localStorage
       localStorage.setItem('token', token);
+      
+      // Set default Authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       return { token, user };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -39,19 +42,15 @@ export const login = createAsyncThunk(
   }
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
-  localStorage.removeItem('token');
-  delete axios.defaults.headers.common['Authorization'];
-});
-
-export const fetchCurrentUser = createAsyncThunk(
-  'auth/fetchCurrentUser',
+export const logout = createAsyncThunk(
+  'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/v1/auth/me');
-      return response.data.data;
+      await axios.post(`${API_URL}/auth/logout`);
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user');
+      return rejectWithValue(error.response?.data?.message || 'Logout failed');
     }
   }
 );
@@ -60,9 +59,6 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setError: (state, action: PayloadAction<string>) => {
-      state.error = action.payload;
-    },
     clearError: (state) => {
       state.error = null;
     },
@@ -77,7 +73,6 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.token = action.payload.token;
         state.user = action.payload.user;
       })
       .addCase(login.rejected, (state, action) => {
@@ -85,29 +80,21 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       // Logout
-      .addCase(logout.fulfilled, (state) => {
-        state.user = null;
-        state.token = null;
-        state.isAuthenticated = false;
-      })
-      // Fetch current user
-      .addCase(fetchCurrentUser.pending, (state) => {
+      .addCase(logout.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+      .addCase(logout.fulfilled, (state) => {
         state.loading = false;
-        state.user = action.payload;
-      })
-      .addCase(fetchCurrentUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
+      })
+      .addCase(logout.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { setError, clearError } = authSlice.actions;
+export const { clearError } = authSlice.actions;
 export default authSlice.reducer;

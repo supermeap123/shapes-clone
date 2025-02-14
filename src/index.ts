@@ -1,101 +1,53 @@
 import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
-import { connectDB } from './config/database';
-import { errorHandler } from './middleware/errorHandler';
+import cors from 'cors';
+import { config } from 'dotenv';
+import routes from './routes';
 
-// Import routes
-import profileRoutes from './routes/profile.routes';
-import personalityRoutes from './routes/personality.routes';
-import freeWillRoutes from './routes/freewill.routes';
-import knowledgeRoutes from './routes/knowledge.routes';
-import trainingRoutes from './routes/training.routes';
-import aiEngineRoutes from './routes/aiengine.routes';
-import imageEngineRoutes from './routes/imageengine.routes';
-import voiceEngineRoutes from './routes/voiceengine.routes';
-import settingsRoutes from './routes/settings.routes';
-import adminRoutes from './routes/admin.routes';
-
-// Load environment variables
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined in environment variables');
-}
-
-if (!process.env.MONGODB_URI) {
-  throw new Error('MONGODB_URI is not defined in environment variables');
-}
-
-// Connect to MongoDB
-connectDB();
+config();
 
 const app = express();
+const port = process.env.PORT || 5001;
 
 // Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cookieParser());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
+app.use(express.json());
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+// Routes
+app.use('/api/v1', routes);
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
-// API routes
-const apiRouter = express.Router();
-app.use('/api/v1', apiRouter);
-
-apiRouter.use('/profile', profileRoutes);
-apiRouter.use('/personality', personalityRoutes);
-apiRouter.use('/freewill', freeWillRoutes);
-apiRouter.use('/knowledge', knowledgeRoutes);
-apiRouter.use('/training', trainingRoutes);
-apiRouter.use('/ai-engine', aiEngineRoutes);
-apiRouter.use('/image-engine', imageEngineRoutes);
-apiRouter.use('/voice-engine', voiceEngineRoutes);
-apiRouter.use('/settings', settingsRoutes);
-apiRouter.use('/admin', adminRoutes);
-
-// Error handling
-app.use(errorHandler);
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route ${req.originalUrl} not found`
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shapes')
+  .then(() => {
+    console.log('MongoDB connected successfully to', mongoose.connection.name);
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
   });
+
+// Handle app termination
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed through app termination');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during app termination:', err);
+    process.exit(1);
+  }
 });
 
-const PORT = process.env.PORT || 5000;
-
-const server = app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
 });
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err: Error) => {
-  console.error(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err: Error) => {
-  console.error(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
-});
-
-export default app;

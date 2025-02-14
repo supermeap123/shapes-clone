@@ -1,42 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
+  Container,
+  Typography,
   TextField,
   Button,
-  Typography,
-  Switch,
+  Grid,
+  Paper,
   FormControlLabel,
+  Switch,
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
+  Box,
   Chip,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useAppSelector } from '../../store';
 import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
-
-interface UserDialogState {
-  open: boolean;
-  username: string;
-  isEdit: boolean;
-  editIndex?: number;
-}
 
 const Settings: React.FC = () => {
   const { shapeId } = useParams<{ shapeId: string }>();
@@ -56,26 +39,25 @@ const Settings: React.FC = () => {
     sleepMessage: '',
     serverJoinMessage: '',
   });
-  const [userDialog, setUserDialog] = useState<UserDialogState>({
-    open: false,
-    username: '',
-    isEdit: false,
-  });
+  const [newOwner, setNewOwner] = useState('');
+  const [newIgnoredUser, setNewIgnoredUser] = useState('');
+  const [newAllowedUser, setNewAllowedUser] = useState('');
+  const [newBlockedUser, setNewBlockedUser] = useState('');
 
   useEffect(() => {
     if (shapeId) {
       dispatch(fetchShapeById(shapeId));
     }
-  }, [dispatch, shapeId]);
+  }, [shapeId, dispatch]);
 
   useEffect(() => {
     if (currentShape) {
       setShapeOwners(currentShape.settings.shapeOwners || []);
       setServerListVisibility(currentShape.settings.privacySettings?.serverListVisibility || false);
       setDmResponseSettings({
-        enabled: currentShape.settings.privacySettings?.dmResponseSettings.enabled || false,
-        allowlist: currentShape.settings.privacySettings?.dmResponseSettings.allowlist || [],
-        blocklist: currentShape.settings.privacySettings?.dmResponseSettings.blocklist || [],
+        enabled: currentShape.settings.privacySettings?.dmResponseSettings?.enabled || false,
+        allowlist: currentShape.settings.privacySettings?.dmResponseSettings?.allowlist || [],
+        blocklist: currentShape.settings.privacySettings?.dmResponseSettings?.blocklist || [],
       });
       setIgnoreList(currentShape.settings.privacySettings?.ignoreList || []);
       setCustomMessages({
@@ -87,12 +69,11 @@ const Settings: React.FC = () => {
     }
   }, [currentShape]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentShape && shapeId) {
+  const handleSave = () => {
+    if (shapeId && currentShape) {
       dispatch(updateShape({
         shapeId,
-        data: {
+        updates: {
           settings: {
             ...currentShape.settings,
             shapeOwners,
@@ -109,302 +90,276 @@ const Settings: React.FC = () => {
   };
 
   const handleAddOwner = () => {
-    setUserDialog({
-      open: true,
-      username: '',
-      isEdit: false,
+    if (newOwner && !shapeOwners.includes(newOwner)) {
+      setShapeOwners([...shapeOwners, newOwner]);
+      setNewOwner('');
+    }
+  };
+
+  const handleRemoveOwner = (owner: string) => {
+    setShapeOwners(shapeOwners.filter((o) => o !== owner));
+  };
+
+  const handleAddIgnoredUser = () => {
+    if (newIgnoredUser && !ignoreList.includes(newIgnoredUser)) {
+      setIgnoreList([...ignoreList, newIgnoredUser]);
+      setNewIgnoredUser('');
+    }
+  };
+
+  const handleRemoveIgnoredUser = (user: string) => {
+    setIgnoreList(ignoreList.filter((u) => u !== user));
+  };
+
+  const handleAddAllowedUser = () => {
+    if (newAllowedUser && !dmResponseSettings.allowlist.includes(newAllowedUser)) {
+      setDmResponseSettings({
+        ...dmResponseSettings,
+        allowlist: [...dmResponseSettings.allowlist, newAllowedUser],
+      });
+      setNewAllowedUser('');
+    }
+  };
+
+  const handleRemoveAllowedUser = (user: string) => {
+    setDmResponseSettings({
+      ...dmResponseSettings,
+      allowlist: dmResponseSettings.allowlist.filter((u) => u !== user),
     });
   };
 
-  const handleSaveUser = () => {
-    if (userDialog.username) {
-      if (userDialog.isEdit && typeof userDialog.editIndex === 'number') {
-        const newOwners = [...shapeOwners];
-        newOwners[userDialog.editIndex] = userDialog.username;
-        setShapeOwners(newOwners);
-      } else {
-        setShapeOwners([...shapeOwners, userDialog.username]);
-      }
+  const handleAddBlockedUser = () => {
+    if (newBlockedUser && !dmResponseSettings.blocklist.includes(newBlockedUser)) {
+      setDmResponseSettings({
+        ...dmResponseSettings,
+        blocklist: [...dmResponseSettings.blocklist, newBlockedUser],
+      });
+      setNewBlockedUser('');
     }
-    setUserDialog({ ...userDialog, open: false });
   };
 
-  const handleDeleteOwner = (index: number) => {
-    const newOwners = [...shapeOwners];
-    newOwners.splice(index, 1);
-    setShapeOwners(newOwners);
+  const handleRemoveBlockedUser = (user: string) => {
+    setDmResponseSettings({
+      ...dmResponseSettings,
+      blocklist: dmResponseSettings.blocklist.filter((u) => u !== user),
+    });
   };
-
-  if (loading || !currentShape) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading settings...</Typography>
-      </Box>
-    );
-  }
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
         Settings
       </Typography>
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Shape Owners
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                value={newOwner}
+                onChange={(e) => setNewOwner(e.target.value)}
+                placeholder="Add owner"
+                size="small"
+              />
+              <IconButton onClick={handleAddOwner} color="primary">
+                <AddIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {shapeOwners.map((owner) => (
+                <Chip
+                  key={owner}
+                  label={owner}
+                  onDelete={() => handleRemoveOwner(owner)}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Shape Owners */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Shape Owners
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddOwner}
-                >
-                  Add Owner
-                </Button>
-              </Box>
-              <List>
-                {shapeOwners.map((owner, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText primary={owner} />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={() => handleDeleteOwner(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Privacy Settings
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={serverListVisibility}
+                  onChange={(e) => setServerListVisibility(e.target.checked)}
+                />
+              }
+              label="Show in Server List"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={dmResponseSettings.enabled}
+                  onChange={(e) =>
+                    setDmResponseSettings({
+                      ...dmResponseSettings,
+                      enabled: e.target.checked,
+                    })
+                  }
+                />
+              }
+              label="Allow DM Responses"
+            />
+          </Grid>
 
-        {/* Privacy Settings */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Privacy Settings
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={serverListVisibility}
-                        onChange={(e) => setServerListVisibility(e.target.checked)}
-                      />
-                    }
-                    label="Show in Server List"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={dmResponseSettings.enabled}
-                        onChange={(e) => setDmResponseSettings({
-                          ...dmResponseSettings,
-                          enabled: e.target.checked,
-                        })}
-                      />
-                    }
-                    label="Enable DM Responses"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    DM Allowlist
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {dmResponseSettings.allowlist.map((user, index) => (
-                      <Chip
-                        key={index}
-                        label={user}
-                        onDelete={() => {
-                          const newAllowlist = [...dmResponseSettings.allowlist];
-                          newAllowlist.splice(index, 1);
-                          setDmResponseSettings({
-                            ...dmResponseSettings,
-                            allowlist: newAllowlist,
-                          });
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    DM Blocklist
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {dmResponseSettings.blocklist.map((user, index) => (
-                      <Chip
-                        key={index}
-                        label={user}
-                        onDelete={() => {
-                          const newBlocklist = [...dmResponseSettings.blocklist];
-                          newBlocklist.splice(index, 1);
-                          setDmResponseSettings({
-                            ...dmResponseSettings,
-                            blocklist: newBlocklist,
-                          });
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              DM Response Settings
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                value={newAllowedUser}
+                onChange={(e) => setNewAllowedUser(e.target.value)}
+                placeholder="Add allowed user"
+                size="small"
+              />
+              <IconButton onClick={handleAddAllowedUser} color="primary">
+                <AddIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {dmResponseSettings.allowlist.map((user) => (
+                <Chip
+                  key={user}
+                  label={user}
+                  onDelete={() => handleRemoveAllowedUser(user)}
+                />
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                value={newBlockedUser}
+                onChange={(e) => setNewBlockedUser(e.target.value)}
+                placeholder="Add blocked user"
+                size="small"
+              />
+              <IconButton onClick={handleAddBlockedUser} color="primary">
+                <AddIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {dmResponseSettings.blocklist.map((user) => (
+                <Chip
+                  key={user}
+                  label={user}
+                  onDelete={() => handleRemoveBlockedUser(user)}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-        {/* Custom Messages */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Custom Messages
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Wack Message"
-                    value={customMessages.wackMessage}
-                    onChange={(e) => setCustomMessages({
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Ignore List
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                value={newIgnoredUser}
+                onChange={(e) => setNewIgnoredUser(e.target.value)}
+                placeholder="Add ignored user"
+                size="small"
+              />
+              <IconButton onClick={handleAddIgnoredUser} color="primary">
+                <AddIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {ignoreList.map((user) => (
+                <Chip
+                  key={user}
+                  label={user}
+                  onDelete={() => handleRemoveIgnoredUser(user)}
+                />
+              ))}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Custom Messages
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Wack Message"
+                  value={customMessages.wackMessage}
+                  onChange={(e) =>
+                    setCustomMessages({
                       ...customMessages,
                       wackMessage: e.target.value,
-                    })}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Error Message"
-                    value={customMessages.errorMessage}
-                    onChange={(e) => setCustomMessages({
+                    })
+                  }
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Error Message"
+                  value={customMessages.errorMessage}
+                  onChange={(e) =>
+                    setCustomMessages({
                       ...customMessages,
                       errorMessage: e.target.value,
-                    })}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Sleep Message"
-                    value={customMessages.sleepMessage}
-                    onChange={(e) => setCustomMessages({
+                    })
+                  }
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Sleep Message"
+                  value={customMessages.sleepMessage}
+                  onChange={(e) =>
+                    setCustomMessages({
                       ...customMessages,
                       sleepMessage: e.target.value,
-                    })}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Server Join Message"
-                    value={customMessages.serverJoinMessage}
-                    onChange={(e) => setCustomMessages({
+                    })
+                  }
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Server Join Message"
+                  value={customMessages.serverJoinMessage}
+                  onChange={(e) =>
+                    setCustomMessages({
                       ...customMessages,
                       serverJoinMessage: e.target.value,
-                    })}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
+                    })
+                  }
+                  multiline
+                  rows={2}
+                />
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
+          </Grid>
 
-        {/* Danger Zone */}
-        <Grid item xs={12}>
-          <Card sx={{ bgcolor: 'error.main', color: 'error.contrastText' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <WarningIcon />
-                <Typography variant="h6">
-                  Danger Zone
-                </Typography>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Button
-                    variant="contained"
-                    color="inherit"
-                    fullWidth
-                    sx={{ color: 'error.main' }}
-                  >
-                    Reset Bot Token
-                  </Button>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Button
-                    variant="contained"
-                    color="inherit"
-                    fullWidth
-                    sx={{ color: 'error.main' }}
-                  >
-                    Delete Shape
-                  </Button>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Actions */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={loading}
+            >
               Save Changes
             </Button>
-          </Box>
+          </Grid>
         </Grid>
-      </Grid>
-
-      {/* User Dialog */}
-      <Dialog
-        open={userDialog.open}
-        onClose={() => setUserDialog({ ...userDialog, open: false })}
-      >
-        <DialogTitle>
-          {userDialog.isEdit ? 'Edit User' : 'Add User'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Discord Username"
-              value={userDialog.username}
-              onChange={(e) => setUserDialog({
-                ...userDialog,
-                username: e.target.value,
-              })}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUserDialog({ ...userDialog, open: false })}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveUser} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      </Paper>
+    </Container>
   );
 };
 

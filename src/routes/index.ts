@@ -1,31 +1,34 @@
 import { Router } from 'express';
-import { profileRoutes } from './profile.routes';
-import { personalityRoutes } from './personality.routes';
-import { freeWillRoutes } from './freewill.routes';
-import { knowledgeRoutes } from './knowledge.routes';
-import { trainingRoutes } from './training.routes';
-import { aiEngineRoutes } from './aiengine.routes';
-import { imageEngineRoutes } from './imageengine.routes';
-import { voiceEngineRoutes } from './voiceengine.routes';
-import { settingsRoutes } from './settings.routes';
-import { authMiddleware } from '../middleware/auth';
+import authRoutes from './auth.routes';
+import adminRoutes from './admin.routes';
+import profileRoutes from './profile.routes';
+import personalityRoutes from './personality.routes';
+import freewillRoutes from './freewill.routes';
+import knowledgeRoutes from './knowledge.routes';
+import trainingRoutes from './training.routes';
+import aiengineRoutes from './aiengine.routes';
+import imageengineRoutes from './imageengine.routes';
+import voiceengineRoutes from './voiceengine.routes';
+import settingsRoutes from './settings.routes';
+import shapeRoutes from './shape.routes';
+import { authenticateJWT } from '../middleware/auth';
 
 const router = Router();
 
-// Health check endpoint
-router.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// Public routes
+router.use('/auth', authRoutes);
 
 // Protected routes
-router.use('/profile', authMiddleware, profileRoutes);
-router.use('/personality', authMiddleware, personalityRoutes);
-router.use('/freewill', authMiddleware, freeWillRoutes);
-router.use('/knowledge', authMiddleware, knowledgeRoutes);
-router.use('/training', authMiddleware, trainingRoutes);
-router.use('/aiengine', authMiddleware, aiEngineRoutes);
-router.use('/imageengine', authMiddleware, imageEngineRoutes);
-router.use('/voiceengine', authMiddleware, voiceEngineRoutes);
-router.use('/settings', authMiddleware, settingsRoutes);
+router.use('/shapes', authenticateJWT, shapeRoutes);
+router.use('/admin', authenticateJWT, adminRoutes);
+router.use('/profile', authenticateJWT, profileRoutes);
+router.use('/personality', authenticateJWT, personalityRoutes);
+router.use('/freewill', authenticateJWT, freewillRoutes);
+router.use('/knowledge', authenticateJWT, knowledgeRoutes);
+router.use('/training', authenticateJWT, trainingRoutes);
+router.use('/ai-engine', authenticateJWT, aiengineRoutes);
+router.use('/image-engine', authenticateJWT, imageengineRoutes);
+router.use('/voice-engine', authenticateJWT, voiceengineRoutes);
+router.use('/settings', authenticateJWT, settingsRoutes);
 
 export default router;

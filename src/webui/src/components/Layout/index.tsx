@@ -1,31 +1,29 @@
-import React from 'react';
-import { Box, CssBaseline, useTheme } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import Sidebar from './Sidebar';
+import React, { useState } from 'react';
+import { Box, useTheme } from '@mui/material';
 import TopBar from './TopBar';
-import ConfirmDialog from '../common/ConfirmDialog';
-import CustomSnackbar from '../common/CustomSnackbar';
+import Sidebar from './Sidebar';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
+const drawerWidth = 240;
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme = useTheme();
-  const { sidebarOpen } = useSelector((state: RootState) => state.ui);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const drawerWidth = 240;
+  const handleDrawerToggle = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <CssBaseline />
-      
-      {/* Top Navigation Bar */}
-      <TopBar drawerWidth={drawerWidth} />
+    <Box sx={{ display: 'flex' }}>
+      {/* App Bar */}
+      <TopBar
+        drawerWidth={drawerWidth}
+        sidebarOpen={sidebarOpen}
+        onDrawerToggle={handleDrawerToggle}
+      />
 
       {/* Sidebar Navigation */}
-      <Sidebar drawerWidth={drawerWidth} />
+      <Sidebar drawerWidth={drawerWidth} sidebarOpen={sidebarOpen} />
 
       {/* Main Content */}
       <Box
@@ -35,28 +33,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          mt: '64px', // Height of TopBar
+          mt: '64px',
           backgroundColor: theme.palette.background.default,
-          transition: theme.transitions.create(['margin', 'width'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-          ...(sidebarOpen && {
-            width: `calc(100% - ${drawerWidth}px)`,
-            marginLeft: `${drawerWidth}px`,
-            transition: theme.transitions.create(['margin', 'width'], {
-              easing: theme.transitions.easing.easeOut,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-          }),
+          minHeight: 'calc(100vh - 64px)',
         }}
       >
         {children}
       </Box>
-
-      {/* Global Components */}
-      <ConfirmDialog />
-      <CustomSnackbar />
     </Box>
   );
 };

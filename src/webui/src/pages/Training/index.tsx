@@ -1,29 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
+  Container,
+  Typography,
   TextField,
   Button,
-  Typography,
+  Grid,
+  Paper,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Box,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Info as InfoIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useAppSelector } from '../../store';
 import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
@@ -31,8 +22,6 @@ import { fetchShapeById, updateShape } from '../../store/slices/shapesSlice';
 interface ConversationDialogState {
   open: boolean;
   snippet: string;
-  isEdit: boolean;
-  editIndex?: number;
 }
 
 const Training: React.FC = () => {
@@ -43,14 +32,13 @@ const Training: React.FC = () => {
   const [dialogState, setDialogState] = useState<ConversationDialogState>({
     open: false,
     snippet: '',
-    isEdit: false,
   });
 
   useEffect(() => {
     if (shapeId) {
       dispatch(fetchShapeById(shapeId));
     }
-  }, [dispatch, shapeId]);
+  }, [shapeId, dispatch]);
 
   useEffect(() => {
     if (currentShape) {
@@ -58,12 +46,11 @@ const Training: React.FC = () => {
     }
   }, [currentShape]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (currentShape && shapeId) {
+  const handleSave = () => {
+    if (shapeId && currentShape) {
       dispatch(updateShape({
         shapeId,
-        data: {
+        updates: {
           training: {
             ...currentShape.training,
             conversationSnippets: snippets,
@@ -74,150 +61,91 @@ const Training: React.FC = () => {
   };
 
   const handleAddSnippet = () => {
-    setDialogState({
-      open: true,
-      snippet: '',
-      isEdit: false,
-    });
-  };
-
-  const handleEditSnippet = (index: number) => {
-    setDialogState({
-      open: true,
-      snippet: snippets[index],
-      isEdit: true,
-      editIndex: index,
-    });
-  };
-
-  const handleDeleteSnippet = (index: number) => {
-    const newSnippets = [...snippets];
-    newSnippets.splice(index, 1);
-    setSnippets(newSnippets);
-  };
-
-  const handleSaveSnippet = () => {
-    if (dialogState.isEdit && typeof dialogState.editIndex === 'number') {
-      const newSnippets = [...snippets];
-      newSnippets[dialogState.editIndex] = dialogState.snippet;
-      setSnippets(newSnippets);
-    } else {
+    if (dialogState.snippet) {
       setSnippets([...snippets, dialogState.snippet]);
+      setDialogState({ open: false, snippet: '' });
     }
-    setDialogState({ ...dialogState, open: false });
   };
 
-  if (loading || !currentShape) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading training settings...</Typography>
-      </Box>
-    );
-  }
+  const handleRemoveSnippet = (index: number) => {
+    setSnippets(snippets.filter((_, i) => i !== index));
+  };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" gutterBottom>
-        Training Settings
+        Training Data
       </Typography>
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Conversation Snippets
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => setDialogState({ ...dialogState, open: true })}
+            >
+              Add Conversation Snippet
+            </Button>
+            <Box sx={{ mt: 2 }}>
+              {snippets.map((snippet, index) => (
+                <Chip
+                  key={index}
+                  label={snippet.substring(0, 50) + (snippet.length > 50 ? '...' : '')}
+                  onDelete={() => handleRemoveSnippet(index)}
+                  sx={{ m: 0.5 }}
+                />
+              ))}
+            </Box>
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Conversation Snippets */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="h6">
-                    Conversation Snippets
-                  </Typography>
-                  <Tooltip title="Add example conversations to train the AI's communication style and behavior patterns">
-                    <InfoIcon color="action" sx={{ fontSize: 20 }} />
-                  </Tooltip>
-                </Box>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddSnippet}
-                >
-                  Add Snippet
-                </Button>
-              </Box>
-              <List>
-                {snippets.map((snippet, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText
-                      primary={snippet.length > 100 ? `${snippet.substring(0, 100)}...` : snippet}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={() => handleEditSnippet(index)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton edge="end" onClick={() => handleDeleteSnippet(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-                {snippets.length === 0 && (
-                  <ListItem>
-                    <ListItemText
-                      secondary="No conversation snippets added yet. Add example conversations to train the AI's behavior."
-                    />
-                  </ListItem>
-                )}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Actions */}
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={loading}
+            >
               Save Changes
             </Button>
-          </Box>
+          </Grid>
         </Grid>
-      </Grid>
+      </Paper>
 
-      {/* Snippet Dialog */}
       <Dialog
         open={dialogState.open}
         onClose={() => setDialogState({ ...dialogState, open: false })}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          {dialogState.isEdit ? 'Edit Conversation Snippet' : 'Add Conversation Snippet'}
-        </DialogTitle>
+        <DialogTitle>Add Conversation Snippet</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={8}
-              value={dialogState.snippet}
-              onChange={(e) => setDialogState({
-                ...dialogState,
-                snippet: e.target.value
-              })}
-              placeholder="Enter an example conversation to train the AI's behavior..."
-              variant="outlined"
-            />
-          </Box>
+          <TextField
+            fullWidth
+            multiline
+            rows={8}
+            value={dialogState.snippet}
+            onChange={(e) =>
+              setDialogState({ ...dialogState, snippet: e.target.value })
+            }
+            placeholder="Enter a conversation example..."
+            sx={{ mt: 2 }}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogState({ ...dialogState, open: false })}>
+          <Button
+            onClick={() => setDialogState({ ...dialogState, open: false })}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSaveSnippet} variant="contained" color="primary">
-            Save
+          <Button onClick={handleAddSnippet} color="primary">
+            Add
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

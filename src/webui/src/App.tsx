@@ -55,12 +55,12 @@ const App: React.FC = () => {
           
           {/* Protected Routes */}
           <Route
-            path="/"
+            path="*"
             element={
               <ProtectedRoute>
                 <Layout>
                   <Routes>
-                    <Route index element={<Dashboard />} />
+                    <Route path="/" element={<Dashboard />} />
                     <Route path="/shapes/:shapeId/profile" element={<Profile />} />
                     <Route path="/shapes/:shapeId/personality" element={<Personality />} />
                     <Route path="/shapes/:shapeId/freewill" element={<FreeWill />} />

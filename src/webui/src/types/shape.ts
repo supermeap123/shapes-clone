@@ -1,9 +1,9 @@
 export interface IProfile {
+  nickname: string;
+  description: string;
   avatar?: string;
   banner?: string;
   vanityUrl?: string;
-  nickname?: string;
-  description?: string;
   appearance?: string;
   initialMessage?: string;
   discordName?: string;
@@ -11,11 +11,10 @@ export interface IProfile {
 }
 
 export interface IPersonality {
-  nickname?: string;
+  traits: string[];
+  tone: string;
+  personalityTraits: string[];
   shortBackstory?: string;
-  responseType?: string;
-  personalityTraits?: string[];
-  tone?: string;
   age?: number;
   history?: string;
   likes?: string;
@@ -25,40 +24,19 @@ export interface IPersonality {
 }
 
 export interface IFreeWill {
-  levelOfFreeWill?: 'strict' | 'semi-autonomous' | 'fully autonomous';
-  directMessages?: boolean;
-  reactions?: {
-    enabled: boolean;
-    favorites: string[];
-  };
+  levelOfFreeWill: 'strict' | 'semi-autonomous' | 'fully-autonomous';
+  directMessages: boolean;
+  temperature: number;
+  numberOfMessages: number;
+  favoriteReactions?: string[];
   favoritePeople?: string[];
   keywordsOfInterest?: string[];
   serverInstructions?: string;
   dmInstructions?: string;
-  aiModel?: string;
-  temperature?: number;
-  numberOfMessages?: number;
-}
-
-export interface IKnowledge {
-  generalKnowledge?: string[];
-  commands?: Array<{
-    name: string;
-    response: string;
-  }>;
-  relationships?: Array<{
-    userId: string;
-    type: string;
-    notes: string;
-  }>;
-}
-
-export interface ITraining {
-  conversationSnippets?: string[];
 }
 
 export interface IAIEngine {
-  primaryEngine?: string;
+  primaryEngine: string;
   fallbackEngine?: string;
   freeWillEngine?: string;
   languagePresets?: string[];
@@ -68,16 +46,17 @@ export interface IAIEngine {
   maxResponseLength?: number;
   contextWindow?: number;
   memorySettings?: {
-    shortTermEnabled: boolean;
-    longTermEnabled: boolean;
-    memoryGeneration: boolean;
-    memoryRecall: boolean;
-    memorySharing: boolean;
+    shortTerm: boolean;
+    longTerm: boolean;
+    generation: boolean;
+    recall: boolean;
+    sharing: boolean;
   };
 }
 
 export interface IImageEngine {
-  textCommandPrefix?: string;
+  textCommandPrefix: string;
+  engine: string;
   imageEngine?: string;
   imagePreset?: string;
   imageSizeOptions?: Array<{
@@ -85,10 +64,12 @@ export interface IImageEngine {
     height: number;
     format: string;
   }>;
+  preset?: string;
+  sizes?: string[];
 }
 
 export interface IVoiceEngine {
-  voiceResponses?: boolean;
+  voiceResponses: boolean;
   engine?: string;
   style?: string;
   pitch?: number;
@@ -97,13 +78,21 @@ export interface IVoiceEngine {
   similarity?: number;
 }
 
-export interface ISettings {
-  shapeOwners?: string[];
-  slashCommands?: Array<{
+export interface IKnowledge {
+  generalKnowledge: string[];
+  commands: Array<{
     name: string;
-    enabled: boolean;
+    response: string;
   }>;
-  privacySettings?: {
+}
+
+export interface ITraining {
+  conversationSnippets: string[];
+}
+
+export interface ISettings {
+  shapeOwners: string[];
+  privacySettings: {
     serverListVisibility: boolean;
     dmResponseSettings: {
       enabled: boolean;
@@ -112,7 +101,7 @@ export interface ISettings {
     };
     ignoreList: string[];
   };
-  customMessages?: {
+  customMessages: {
     wackMessage?: string;
     errorMessage?: string;
     sleepMessage?: string;
@@ -125,12 +114,13 @@ export interface IShape {
   profile: IProfile;
   personality: IPersonality;
   freeWill: IFreeWill;
-  knowledge: IKnowledge;
-  training: ITraining;
   aiEngine: IAIEngine;
   imageEngine: IImageEngine;
   voiceEngine: IVoiceEngine;
+  knowledge: IKnowledge;
+  training: ITraining;
   settings: ISettings;
+  owners: string[];
   createdAt: string;
   updatedAt: string;
 }
